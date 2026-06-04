@@ -21,8 +21,16 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared)
-
             implementation(libs.compose.ui)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
         }
+
+        val webMain by creating {
+            dependsOn(commonMain.get())
+        }
+
+        jsMain.get().dependsOn(webMain)
+        wasmJsMain.get().dependsOn(webMain)
     }
 }
