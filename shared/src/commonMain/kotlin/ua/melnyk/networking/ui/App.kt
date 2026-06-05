@@ -26,7 +26,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 
 import ua.melnyk.networking.ui.theme.AppTheme
+import ua.melnyk.networking.ui.theme.backgroundDark
+import ua.melnyk.networking.ui.theme.backgroundLight
 import ua.melnyk.networking.ui.theme.primaryDark
+import ua.melnyk.networking.ui.theme.primaryLight
 
 @Composable
 fun App(
@@ -36,7 +39,7 @@ fun App(
         val state by viewModel.state.collectAsStateWithLifecycle()
         Column(
             modifier = Modifier
-                .background(primaryDark)
+                .background(primaryLight)
                 .systemBarsPadding()
                 .padding(16.dp)
                 .fillMaxSize(),
@@ -123,6 +126,7 @@ private fun AppContent(
         if (state.isProgressVisible) {
             LinearProgressIndicator(
                 modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 5.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
         }
@@ -132,7 +136,8 @@ private fun AppContent(
             Text(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState),
+                    .verticalScroll(scrollState)
+                    .padding(10.dp),
                 text = it
             )
         }
