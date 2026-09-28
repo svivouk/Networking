@@ -1,4 +1,4 @@
-package ua.melnyk.networking.ui.theme
+package ua.melnyk.networking.presentation.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val primaryLight = Color(0xFF8C4F27)

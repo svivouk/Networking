@@ -1,15 +1,12 @@
-package ua.melnyk.networking.ui.theme
+package ua.melnyk.networking.presentation.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.font.Font
 import networking.shared.generated.resources.Alexandria_VariableFont_wght
 import networking.shared.generated.resources.Res
 import org.jetbrains.compose.resources.Font
@@ -265,7 +262,7 @@ fun AppTheme(
 }
 
 object AppTheme {
-    val typography: androidx.compose.material3.Typography
+    val typography: Typography
         @Composable
         get() = MaterialTheme.typography
 }

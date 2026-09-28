@@ -1,4 +1,4 @@
-package ua.melnyk.networking.ui.theme
+package ua.melnyk.networking.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.font.Font

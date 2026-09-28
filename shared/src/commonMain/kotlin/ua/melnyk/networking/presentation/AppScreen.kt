@@ -1,4 +1,4 @@
-package ua.melnyk.networking.ui
+package ua.melnyk.networking.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -14,6 +14,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -23,20 +25,39 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import ua.melnyk.networking.presentation.ui.ObserveEvents
 
-import ua.melnyk.networking.ui.theme.AppTheme
-import ua.melnyk.networking.ui.theme.backgroundDark
-import ua.melnyk.networking.ui.theme.backgroundLight
-import ua.melnyk.networking.ui.theme.primaryDark
-import ua.melnyk.networking.ui.theme.primaryLight
+import ua.melnyk.networking.presentation.ui.theme.AppTheme
+import ua.melnyk.networking.presentation.ui.theme.primaryLight
 
 @Composable
 fun App(
     viewModel: AppViewModel = koinViewModel(),
 ) {
     AppTheme{
+        val snackbarHostState = remember { SnackbarHostState() }
+        val coroutineScope = rememberCoroutineScope()
         val state by viewModel.state.collectAsStateWithLifecycle()
+
+        ObserveEvents(viewModel.events) { event ->
+            when (event) {
+                is AppEvent.ShowDeleteErrorSnackbar -> {
+                    showSnackbar(coroutineScope, snackbarHostState, event.errorMessage)
+                }
+                is AppEvent.ShowGetErrorSnackbar -> {
+                    showSnackbar(coroutineScope, snackbarHostState, event.errorMessage)
+                }
+                is AppEvent.ShowPostErrorSnackbar -> {
+                    showSnackbar(coroutineScope, snackbarHostState, event.errorMessage)
+                }
+                is AppEvent.ShowPutErrorSnackbar -> {
+                    showSnackbar(coroutineScope, snackbarHostState, event.errorMessage)
+                }
+            }
+        }
         Column(
             modifier = Modifier
                 .background(primaryLight)
@@ -48,21 +69,22 @@ fun App(
             AppContent(
                 state = state,
                 onGet = {
-                    viewModel.fetchPosts()
+                    viewModel.onAction(AppAction.OnFetchPosts)
                 },
                 onPost = {
-                    viewModel.createPost()
+                    viewModel.onAction(AppAction.OnCreatePosts)
                 },
                 onPut = {
-                    viewModel.updatePost()
+                    viewModel.onAction(AppAction.OnUpdatePosts)
                 },
                 onDelete = {
-                    viewModel.deletePost()
+                    viewModel.onAction(AppAction.OnDeletePosts)
                 }
             )
         }
     }
 }
+
 
 @Composable
 private fun AppContent(
@@ -153,6 +175,18 @@ private fun AppContent(
                 text = it
             )
         }
+    }
+}
+private fun showSnackbar(
+    scope: CoroutineScope,
+    snackbarHostState: SnackbarHostState,
+    message: String
+) {
+    scope.launch {
+        snackbarHostState.showSnackbar(
+            message = message,
+            duration = SnackbarDuration.Short
+        )
     }
 }
 @Preview

@@ -1,4 +1,4 @@
-package ua.melnyk.networking.data.posts
+package ua.melnyk.networking.data.posts.service
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
@@ -9,7 +9,7 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import ua.melnyk.networking.data.common.NetworkResult
+import ua.melnyk.networking.data.common.Result
 import ua.melnyk.networking.data.common.safeRequest
 import ua.melnyk.networking.data.posts.model.requests.NewPost
 import ua.melnyk.networking.data.posts.model.responces.DeletedPost
@@ -17,43 +17,40 @@ import ua.melnyk.networking.data.posts.model.responces.Post
 import ua.melnyk.networking.data.posts.model.responces.Posts
 
 internal class AppPostApiService(
-    private val client: HttpClient
-): PostApiService {
+    private val client: HttpClient,
+) : PostApiService {
 
-    override suspend fun getAllPost(): NetworkResult<Posts> {
+    override suspend fun getAllPost(): Result<Posts> {
         return client.safeRequest {
-            get("$BASE_URL$POSTS_API"){
+            get("$BASE_URL$POSTS_API") {
                 accept(ContentType.Application.Json)
             }
         }
     }
 
-    override suspend fun addPost(post: NewPost): NetworkResult<Post> {
+    override suspend fun addPost(post: NewPost): Result<Post> {
         return client.safeRequest {
-            post("$BASE_URL$POSTS_API/$ADD_POST"){
+            post("$BASE_URL$POSTS_API/$ADD_POST") {
                 contentType(ContentType.Application.Json)
                 setBody(post)
             }
         }
     }
 
-    override suspend fun updatePost(post: Post): NetworkResult<Post> {
+    override suspend fun updatePost(post: Post): Result<Post> {
         return client.safeRequest {
-            put("$BASE_URL$POSTS_API/${post.id}"){
+            put("$BASE_URL$POSTS_API/${post.id}") {
                 contentType(ContentType.Application.Json)
                 setBody(post)
             }
         }
     }
 
-    override suspend fun deletePost(postId: Int): NetworkResult<DeletedPost> {
+    override suspend fun deletePost(postId: Int): Result<DeletedPost> {
         return client.safeRequest {
             delete("$BASE_URL$POSTS_API/$postId") {
                 accept(ContentType.Application.Json)
             }
         }
     }
-
-
-
 }

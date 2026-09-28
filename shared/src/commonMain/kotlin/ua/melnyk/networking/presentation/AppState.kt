@@ -1,4 +1,4 @@
-package ua.melnyk.networking.ui
+package ua.melnyk.networking.presentation
 
 import androidx.compose.runtime.Immutable
 import ua.melnyk.networking.data.posts.model.responces.Post

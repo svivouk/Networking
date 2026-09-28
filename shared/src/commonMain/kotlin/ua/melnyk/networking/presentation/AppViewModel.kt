@@ -1,115 +1,127 @@
-package ua.melnyk.networking.ui
+package ua.melnyk.networking.presentation
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import ua.melnyk.networking.data.common.NetworkResult
+import ua.melnyk.networking.data.common.Result
+import ua.melnyk.networking.data.common.onFailure
+import ua.melnyk.networking.data.common.onSuccess
 import ua.melnyk.networking.data.posts.model.requests.NewPost
 import ua.melnyk.networking.data.posts.model.responces.Reactions
-import ua.melnyk.networking.domain.posts.PostRepository
+import ua.melnyk.networking.domain.posts.create.CreatePostUseCase
+import ua.melnyk.networking.domain.posts.edit.EditUseCase
+import ua.melnyk.networking.domain.posts.obtain.ObtainPostsUseCase
+import ua.melnyk.networking.domain.posts.remove.RemovePostUseCase
 import kotlin.time.Duration.Companion.milliseconds
 
 @Stable
 class AppViewModel internal constructor(
-    private val postRepository: PostRepository
+    private val createPostUseCase: CreatePostUseCase,
+    private val editUseCase: EditUseCase,
+    private val obtainPostsUseCase: ObtainPostsUseCase,
+    private val removePostUseCase: RemovePostUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AppState())
     internal val state: StateFlow<AppState> = _state.asStateFlow()
 
+    private val _events = Channel<AppEvent>(capacity = Channel.BUFFERED)
+    val events: Flow<AppEvent> = _events.receiveAsFlow()
+
     init {
         fetchPosts()
     }
 
-    internal fun fetchPosts() {
+    fun onAction(action: AppAction) {
+        when (action) {
+            AppAction.OnFetchPosts -> fetchPosts()
+            AppAction.OnCreatePosts -> createPost()
+            AppAction.OnUpdatePosts -> updatePost()
+            AppAction.OnDeletePosts -> deletePost()
+        }
+    }
+
+    private fun fetchPosts() {
         toggleProgressVisibility()
         viewModelScope.launch {
             resetPreviousResults()
             delay(350.milliseconds)
-            when (val result = postRepository.getAllPost()) {
-                is NetworkResult.Success -> {
-                    _state.update {
-                        it.copy(
-                            posts = result.data.posts,
-                            result = result.data.toString()
-                        )
-                    }
-                    toggleProgressVisibility()
+            obtainPostsUseCase().onSuccess { result ->
+                _state.update {
+                    it.copy(
+                        posts = result.posts,
+                        result = result.toString()
+                    )
                 }
-                is NetworkResult.Failure -> {
-                    _state.update { it.copy(error = result.errorMessage) }
-                    toggleProgressVisibility()
-                }
+                toggleProgressVisibility()
+            }.onFailure { errorMessage ->
+                _events.trySend(AppEvent.ShowGetErrorSnackbar(errorMessage))
             }
         }
     }
 
-    internal fun createPost() {
+    private fun createPost() {
         toggleProgressVisibility()
         viewModelScope.launch {
             resetPreviousResults()
-            delay(350.milliseconds)
-            when (val result = postRepository.addPost(createNewPost())) {
-                is NetworkResult.Success -> {
+            createPostUseCase(createNewPost())
+                .onSuccess { result ->
                     _state.update {
-                        it.copy(
-                            result = result.data.toString()
-                        )
+                        it.copy(result = result)
                     }
-                    toggleProgressVisibility()
+                }.onFailure { errorMessage ->
+                    _events.trySend(AppEvent.ShowPostErrorSnackbar(errorMessage))
+
                 }
-                is NetworkResult.Failure -> {
-                    _state.update { it.copy(error = result.errorMessage) }
-                    toggleProgressVisibility()
-                }
-            }
+            toggleProgressVisibility()
         }
     }
 
-    internal fun updatePost() {
+    private fun updatePost() {
         toggleProgressVisibility()
         viewModelScope.launch {
             resetPreviousResults()
             delay(350.milliseconds)
-            when (val result = postRepository.updatePost(_state.value.posts.first().copy(body = "Updated body"))) {
-                is NetworkResult.Success -> {
+            editUseCase(_state.value.posts.first().copy(body = "Updated body"))
+                .onSuccess { result ->
                     _state.update {
                         it.copy(
-                            result = result.data.toString()
+                            result = result
                         )
                     }
                     toggleProgressVisibility()
                 }
-                is NetworkResult.Failure -> {
-                    _state.update { it.copy(error = result.errorMessage) }
+                .onFailure { errorMessage ->
+                    _events.trySend(AppEvent.ShowPutErrorSnackbar(errorMessage))
                     toggleProgressVisibility()
                 }
-            }
         }
     }
 
-    internal fun deletePost() {
+    private fun deletePost() {
         toggleProgressVisibility()
         viewModelScope.launch {
             resetPreviousResults()
             delay(350.milliseconds)
-            when (val result = postRepository.deletePost(_state.value.posts.first().id)) {
-                is NetworkResult.Success -> {
+            when (val result = removePostUseCase(_state.value.posts.first().id)) {
+                is Result.Success<*> -> {
                     _state.update {
                         it.copy(
-                            result = result.data.toString()
+                            result = result.data as String?
                         )
                     }
                     toggleProgressVisibility()
                 }
-                is NetworkResult.Failure -> {
+                is Result.Failure -> {
                     _state.update { it.copy(error = result.errorMessage) }
                     toggleProgressVisibility()
                 }
